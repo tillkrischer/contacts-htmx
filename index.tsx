@@ -20,6 +20,11 @@ const contacts = new Map<number, Contact>();
 const BaseHtml = ({ children }: elements.Children) => (
   <html>
     <head>
+      <meta charset="UTF-8"></meta>
+      <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+      ></meta>
       <script src="https://unpkg.com/htmx.org@1.9.5"></script>
       <script src="https://cdn.tailwindcss.com"></script>
     </head>
@@ -30,11 +35,12 @@ const BaseHtml = ({ children }: elements.Children) => (
 app.get("/", (req, res) => {
   res.send(
     <BaseHtml>
-      <div class="flex gap-4">
-        <div class="w-[200px]">
+      <div class="h-screen flex flex-col justify-center items-center">
+        <div class="flex gap-4">
           <div hx-get="/contacts" hx-trigger="load" hx-swap="outerHTML" />
+          <Separator />
+          <div id="form" class="flex-1" />
         </div>
-        <div id="form" class="flex-1" />
       </div>
     </BaseHtml>
   );
@@ -49,26 +55,16 @@ const Form = (props: { contact?: Contact }) => {
   }
 
   return (
-    <form hx-post={postUrl}>
-      <div>
-        <label>First Name</label>
-        <input
-          type="text"
-          name="firstName"
-          value={contact?.firstName ?? ""}
-          class="border"
-        />
+    <form hx-post={postUrl} class="space-y-4">
+      <div class="space-y-2">
+        <Label>First Name</Label>
+        <Input type="text" name="firstName" value={contact?.firstName ?? ""} />
       </div>
-      <div>
-        <label>Last Name</label>
-        <input
-          type="text"
-          name="lastName"
-          value={contact?.lastName ?? ""}
-          class="border"
-        />
+      <div class="space-y-2">
+        <Label>Last Name</Label>
+        <Input type="text" name="lastName" value={contact?.lastName ?? ""} />
       </div>
-      <button class="border">Submit</button>
+      <Button>submit</Button>
     </form>
   );
 };
@@ -118,15 +114,11 @@ const Contacts = (props: { entries: Contact[] }) => {
       hx-get="/contacts"
       hx-swap="outerHTML"
       hx-trigger="newContact from:body"
+      class="space-y-4"
     >
-      <button
-        hx-get="/contact"
-        hx-target="#form"
-        hx-swap="innerHTML"
-        class="border"
-      >
+      <Button hx-get="/contact" hx-target="#form" hx-swap="innerHTML">
         new contact
-      </button>
+      </Button>
       <ul>
         {entries.map((c: Contact) => {
           return (
@@ -134,6 +126,7 @@ const Contacts = (props: { entries: Contact[] }) => {
               hx-get={`/contact/${c.id}`}
               hx-target="#form"
               hx-swap="innerHTML"
+              class="cursor-pointer"
             >{`${c.firstName} ${c.lastName}`}</li>
           );
         })}
@@ -146,3 +139,39 @@ app.get("/contacts", (req, res) => {
   const entries = [...contacts.values()];
   res.send(<Contacts entries={entries} />);
 });
+
+const Input = (attributes: elements.Attributes) => {
+  return (
+    <input
+      class="border-input flex h-10 rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-600 focus-visible:ring-offset-2"
+      {...attributes}
+    />
+  );
+};
+
+const Label = ({ children, ...attributes }: elements.Attributes) => {
+  return (
+    <label class="text-sm font-medium leading-none" {...attributes}>
+      {children}
+    </label>
+  );
+};
+
+const Button = ({ children, ...attributes }: elements.Attributes) => {
+  return (
+    <button
+      class="inline-flex h-10 items-center justify-center rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-gray-50 transition-colors hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2"
+      {...attributes}
+    >
+      {children}
+    </button>
+  );
+};
+
+const Separator = ({ children, ...attributes }: elements.Attributes) => {
+  return (
+    <div class="shrink-0 bg-gray-100 h-full w-[1px]" {...attributes}>
+      {children}
+    </div>
+  );
+};
